@@ -42,6 +42,9 @@ function end(gameState: GameState): void {
 // Valid moves are "up", "down", "left", or "right"
 // See https://docs.battlesnake.com/api/example-move for available data
 function move(gameState: GameState): MoveResponse {
+
+  console.log("==== START MOVE ====\n");
+
   let isMoveSafe: { [key: string]: number } = {
     up: 100,
     down: 100,
@@ -84,7 +87,7 @@ function move(gameState: GameState): MoveResponse {
 
   // Step 2 - Prevent your Battlesnake from colliding with itself
   const myBody = gameState.you.body;
-  for (let i = 1; i < myBody.length - 2; i++) {
+  for (let i = 1; i < myBody.length - 1; i++) {
     const element = myBody[i];
     if (element.x == myHead.x) {
       if (element.y == myHead.y + 1) {
@@ -102,8 +105,11 @@ function move(gameState: GameState): MoveResponse {
   }
 
   // Step 3 - Prevent your Battlesnake from colliding with other Battlesnakes
-  gameState.board.snakes.forEach(snake => {
-    for (let i = 0; i < snake.body.length - 2; i++) {
+
+  const opponents = gameState.board.snakes.filter((snake) => snake.id !== gameState.you.id);
+  console.log(`There are ${opponents.length} opponents`);
+  opponents.forEach(snake => {
+    for (let i = 0; i < snake.body.length - 1; i++) {
       const element = snake.body[i];
       if (element.x == myHead.x) {
         if (element.y == myHead.y + 1) {
@@ -122,7 +128,7 @@ function move(gameState: GameState): MoveResponse {
   });
 
   // Step 4 - Prevent getting close to other heads
-  gameState.board.snakes.forEach(snake => {
+  opponents.forEach(snake => {
     if (snake.body.length >= gameState.you.body.length) {
       if (isMoveSafe.left == 100) {
         if ((snake.body[0].x == gameState.you.body[0].x - 1) && (Math.abs(snake.body[0].y - gameState.you.body[0].y) == 1) ||
@@ -151,6 +157,8 @@ function move(gameState: GameState): MoveResponse {
     }
   });
 
+  console.log("isMoveSafe = " + JSON.stringify(isMoveSafe));
+
   // Are there any safe moves left?
   const safeMoves = Object.keys(isMoveSafe).filter((key) => isMoveSafe[key] > 0);
   if (safeMoves.length == 0) {
@@ -160,6 +168,9 @@ function move(gameState: GameState): MoveResponse {
 
   const maxScore = Math.max(...Object.values(isMoveSafe));
   const bestMoves = Object.keys(isMoveSafe).filter((key) => isMoveSafe[key] == maxScore);
+
+  console.log("maxScore = " + maxScore);
+  console.log("bestMoves = " + JSON.stringify(bestMoves));
 
   // Choose a random move from the safe moves
   const nextMove = bestMoves[Math.floor(Math.random() * bestMoves.length)];
