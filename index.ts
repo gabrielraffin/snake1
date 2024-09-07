@@ -83,9 +83,9 @@ function move(gameState: GameState): MoveResponse {
   }
 
   // Step 2 - Prevent your Battlesnake from colliding with itself
-  gameState.you.body.forEach((element) => {
-    if (element.x == myHead.x) {
-      if (element.y == myHead.y + 1) {
+  gameState.you.body.forEach(element => {
+    if(element.x == myHead.x) {
+      if(element.y == myHead.y + 1) {
         isMoveSafe.up = false;
       } else if (element.y == myHead.y - 1) {
         isMoveSafe.down = false;
@@ -99,8 +99,24 @@ function move(gameState: GameState): MoveResponse {
     }
   });
 
-  // TODO: Step 3 - Prevent your Battlesnake from colliding with other Battlesnakes
-  // opponents = gameState.board.snakes;
+  // Step 3 - Prevent your Battlesnake from colliding with other Battlesnakes
+  gameState.board.snakes.forEach(snake => {
+    snake.body.forEach(element => {
+      if (element.x == myHead.x) {
+        if (element.y == myHead.y + 1) {
+          isMoveSafe.up = false;
+        } else if (element.y == myHead.y - 1) {
+          isMoveSafe.down = false;
+        }
+      } else if (element.y == myHead.y) {
+        if (element.x == myHead.x + 1) {
+          isMoveSafe.right = false;
+        } else if (element.x == myHead.x - 1) {
+          isMoveSafe.left = false;
+        }
+      }
+    }
+  });
 
   // Are there any safe moves left?
   const safeMoves = Object.keys(isMoveSafe).filter((key) => isMoveSafe[key]);
