@@ -25,6 +25,7 @@ function info(): InfoResponse {
     color: "#000000", // TODO: Choose color
     head: "orca", // TODO: Choose head
     tail: "shiny", // TODO: Choose tail
+    version: "0.0.1"
   };
 }
 
