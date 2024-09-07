@@ -1,0 +1,33 @@
+version: 0.2
+
+env:
+  shell: /bin/sh
+phases:
+  pre_build:
+    on-failure: ABORT
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws --version
+      - aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 141483740788.dkr.ecr.us-west-2.amazonaws.com
+      - REPOSITORY_URI=141483740788.dkr.ecr.us-west-2.amazonaws.com/$SNAKE_INTERNAL_NAME
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_TAG=${COMMIT_HASH:=latest}
+  build:
+    on-failure: ABORT
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image...
+      - /bin/sh codebuild_nvm_wrapper.sh
+      - docker build --build-arg NODE_ENV=prod --build-arg LOG_LEVEL=$LOG_LEVEL --build-arg PORT=$PORT --build-arg SNAKE_INTERNAL_NAME=$SNAKE_INTERNAL_NAME -t $REPOSITORY_URI:latest .
+      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
+  post_build:
+    on-failure: ABORT
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker images...
+      - docker push $REPOSITORY_URI:latest
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - printf '[{"name":"'$SNAKE_INTERNAL_NAME'","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+artifacts:
+  files:
+    - imagedefinitions.json

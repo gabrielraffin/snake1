@@ -1,10 +1,19 @@
-FROM node:16
+FROM public.ecr.aws/bitnami/node:20
 
-ENV NODE_ENV=production
+ARG NODE_ENV
+ARG LOG_LEVEL
+ARG PORT
+ARG SNAKE_INTERNAL_NAME
 
-WORKDIR /app
+ENV NODE_ENV=$NODE_ENV
+ENV LOG_LEVEL=$LOG_LEVEL
+ENV PORT=$PORT
+ENV SNAKE_INTERNAL_NAME=$SNAKE_INTERNAL_NAME
 
-COPY . .
-RUN npm install --production
+# Bundle app source
+COPY node_modules node_modules
+COPY build build
 
-CMD [ "npm", "start" ]
+EXPOSE $PORT
+
+CMD [ "node", "build/index.js" ]
