@@ -84,8 +84,8 @@ function move(gameState: GameState): MoveResponse {
 
   // Step 2 - Prevent your Battlesnake from colliding with itself
   gameState.you.body.forEach(element => {
-    if(element.x == myHead.x) {
-      if(element.y == myHead.y + 1) {
+    if (element.x == myHead.x) {
+      if (element.y == myHead.y + 1) {
         isMoveSafe.up = false;
       } else if (element.y == myHead.y - 1) {
         isMoveSafe.down = false;
@@ -116,6 +116,36 @@ function move(gameState: GameState): MoveResponse {
         }
       }
     });
+  });
+
+  // Step 4 - Prevent getting close to other heads
+  gameState.board.snakes.forEach(snake => {
+    if (snake.body.length >= gameState.you.body.length) {
+      if (isMoveSafe.left) {
+        if ((snake.body[0].x == gameState.you.body[0].x - 1) && (Math.abs(snake.body[0].y - gameState.you.body[0].y) == 1) ||
+          (snake.body[0].x == gameState.you.body[0].x - 2) && (snake.body[0].y == gameState.you.body[0].y)) {
+          isMoveSafe.left = false;
+        }
+      }
+      if (isMoveSafe.right) {
+        if ((snake.body[0].x == gameState.you.body[0].x + 1) && (Math.abs(snake.body[0].y - gameState.you.body[0].y) == 1) ||
+          (snake.body[0].x == gameState.you.body[0].x + 2) && (snake.body[0].y == gameState.you.body[0].y)) {
+          isMoveSafe.right = false;
+        }
+      }
+      if (isMoveSafe.down) {
+        if ((snake.body[0].y == gameState.you.body[0].y - 1) && (Math.abs(snake.body[0].x - gameState.you.body[0].x) == 1) ||
+          (snake.body[0].y == gameState.you.body[0].y - 2) && (snake.body[0].x == gameState.you.body[0].x)) {
+          isMoveSafe.down = false;
+        }
+      }
+      if (isMoveSafe.up) {
+        if ((snake.body[0].y == gameState.you.body[0].y + 1) && (Math.abs(snake.body[0].x - gameState.you.body[0].x) == 1) ||
+          (snake.body[0].y == gameState.you.body[0].y + 2) && (snake.body[0].x == gameState.you.body[0].x)) {
+          isMoveSafe.up = false;
+        }
+      }
+    }
   });
 
   // Are there any safe moves left?
