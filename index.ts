@@ -58,16 +58,16 @@ function move(gameState: GameState): MoveResponse {
 
   if (myNeck.x < myHead.x) {
     // Neck is left of head, don't move left
-    isMoveSafe.left = 0;
+    isMoveSafe.left = -100;
   } else if (myNeck.x > myHead.x) {
     // Neck is right of head, don't move right
-    isMoveSafe.right = 0;
+    isMoveSafe.right = -100;
   } else if (myNeck.y < myHead.y) {
     // Neck is below head, don't move down
-    isMoveSafe.down = 0;
+    isMoveSafe.down = -100;
   } else if (myNeck.y > myHead.y) {
     // Neck is above head, don't move up
-    isMoveSafe.up = 0;
+    isMoveSafe.up = -100;
   }
 
   // Step 1 - Prevent your Battlesnake from moving out of bounds
@@ -75,14 +75,14 @@ function move(gameState: GameState): MoveResponse {
   // boardHeight = gameState.board.height;
 
   if (myHead.x == 0) {
-    isMoveSafe.left = 0;
+    isMoveSafe.left = -100;
   } else if (myHead.x + 1 == gameState.board.width) {
-    isMoveSafe.right = 0;
+    isMoveSafe.right = -100;
   }
   if (myHead.y == 0) {
-    isMoveSafe.down = 0;
+    isMoveSafe.down = -100;
   } else if (myHead.y + 1 == gameState.board.width) {
-    isMoveSafe.up = 0;
+    isMoveSafe.up = -100;
   }
 
   // Step 2 - Prevent your Battlesnake from colliding with itself
@@ -91,15 +91,15 @@ function move(gameState: GameState): MoveResponse {
     const element = myBody[i];
     if (element.x == myHead.x) {
       if (element.y == myHead.y + 1) {
-        isMoveSafe.up = 0;
+        isMoveSafe.up = -100;
       } else if (element.y == myHead.y - 1) {
-        isMoveSafe.down = 0;
+        isMoveSafe.down = -100;
       }
     } else if (element.y == myHead.y) {
       if (element.x == myHead.x + 1) {
-        isMoveSafe.right = 0;
+        isMoveSafe.right = -100;
       } else if (element.x == myHead.x - 1) {
-        isMoveSafe.left = 0;
+        isMoveSafe.left = -100;
       }
     }
   }
@@ -113,15 +113,15 @@ function move(gameState: GameState): MoveResponse {
       const element = snake.body[i];
       if (element.x == myHead.x) {
         if (element.y == myHead.y + 1) {
-          isMoveSafe.up = 0;
+          isMoveSafe.up = -100;
         } else if (element.y == myHead.y - 1) {
-          isMoveSafe.down = 0;
+          isMoveSafe.down = -100;
         }
       } else if (element.y == myHead.y) {
         if (element.x == myHead.x + 1) {
-          isMoveSafe.right = 0;
+          isMoveSafe.right = -100;
         } else if (element.x == myHead.x - 1) {
-          isMoveSafe.left = 0;
+          isMoveSafe.left = -100;
         }
       }
     }
@@ -156,6 +156,26 @@ function move(gameState: GameState): MoveResponse {
       }
     }
   });
+
+  // Step 5 - Prefer food if starving
+  if (gameState.you.health <= 8) {
+    console.log("Looking for food");
+    gameState.board.food.forEach(food => {
+      if (food.x == myHead.x) {
+        if (food.y == myHead.y + 1) {
+          isMoveSafe.up += 5;
+        } else if (food.y == myHead.y - 1) {
+          isMoveSafe.down += 5;
+        }
+      } else if (food.y == myHead.y) {
+        if (food.x == myHead.x + 1) {
+          isMoveSafe.right += 5;
+        } else if (food.x == myHead.x - 1) {
+          isMoveSafe.left += 5;
+        }
+      }
+    });
+  }
 
   console.log("isMoveSafe = " + JSON.stringify(isMoveSafe));
 
