@@ -22,7 +22,7 @@ function info(): InfoResponse {
   return {
     apiversion: "1",
     author: "", // TODO: Your Battlesnake Username
-    color: "#888888", // TODO: Choose color
+    color: "#D61C20", // TODO: Choose color
     head: "dead", // TODO: Choose head
     tail: "bolt", // TODO: Choose tail
   };
