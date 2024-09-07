@@ -73,12 +73,12 @@ function move(gameState: GameState): MoveResponse {
 
   if(myHead.x == 0) {
     isMoveSafe.left = false;
-  } else (myHead.x + 1 == gameState.board.width) {
+  } else if (myHead.x + 1 == gameState.board.width) {
     isMoveSafe.right = false;
   }
   if(myHead.y == 0) {
     isMoveSafe.down = false;
-  } else (myHead.y + 1 == gameState.board.width) {
+  } else if (myHead.y + 1 == gameState.board.width) {
     isMoveSafe.up = false;
   }
 
