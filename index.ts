@@ -71,12 +71,12 @@ function move(gameState: GameState): MoveResponse {
   // boardWidth = gameState.board.width;
   // boardHeight = gameState.board.height;
 
-  if(myHead.x == 0) {
+  if (myHead.x == 0) {
     isMoveSafe.left = false;
   } else if (myHead.x + 1 == gameState.board.width) {
     isMoveSafe.right = false;
   }
-  if(myHead.y == 0) {
+  if (myHead.y == 0) {
     isMoveSafe.down = false;
   } else if (myHead.y + 1 == gameState.board.width) {
     isMoveSafe.up = false;
@@ -84,23 +84,39 @@ function move(gameState: GameState): MoveResponse {
 
   // Step 2 - Prevent your Battlesnake from colliding with itself
   gameState.you.body.forEach(element => {
-    if(element.x == myHead.x) {
-      if(element.y == myHead.y + 1) {
+    if (element.x == myHead.x) {
+      if (element.y == myHead.y + 1) {
         isMoveSafe.up = false;
-      } else if(element.y == myHead.y - 1) {
+      } else if (element.y == myHead.y - 1) {
         isMoveSafe.down = false;
       }
-    } else if(element.y == myHead.y) {
-      if(element.x == myHead.x + 1) {
+    } else if (element.y == myHead.y) {
+      if (element.x == myHead.x + 1) {
         isMoveSafe.right = false;
-      } else if(element.x == myHead.x - 1) {
+      } else if (element.x == myHead.x - 1) {
         isMoveSafe.left = false;
       }
     }
   });
 
-  // TODO: Step 3 - Prevent your Battlesnake from colliding with other Battlesnakes
-  // opponents = gameState.board.snakes;
+  // Step 3 - Prevent your Battlesnake from colliding with other Battlesnakes
+  gameState.board.snakes.forEach(snake => {
+    snake.body.forEach(element => {
+      if (element.x == myHead.x) {
+        if (element.y == myHead.y + 1) {
+          isMoveSafe.up = false;
+        } else if (element.y == myHead.y - 1) {
+          isMoveSafe.down = false;
+        }
+      } else if (element.y == myHead.y) {
+        if (element.x == myHead.x + 1) {
+          isMoveSafe.right = false;
+        } else if (element.x == myHead.x - 1) {
+          isMoveSafe.left = false;
+        }
+      }
+    }
+  });
 
   // Are there any safe moves left?
   const safeMoves = Object.keys(isMoveSafe).filter((key) => isMoveSafe[key]);
