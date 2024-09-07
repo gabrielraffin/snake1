@@ -115,7 +115,7 @@ function move(gameState: GameState): MoveResponse {
           isMoveSafe.left = false;
         }
       }
-    }
+    });
   });
 
   // Are there any safe moves left?
