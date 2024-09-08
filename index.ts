@@ -14,6 +14,7 @@ import runServer from "./server";
 import { GameState, InfoResponse, MoveResponse } from "./types";
 import { directions } from "./utils";
 import { floodFill } from "./floodfill";
+import { rewardForHeadCollition } from "./behaviour";
 
 // info is called when you create your Battlesnake on play.battlesnake.com
 // and controls your Battlesnake's appearance
@@ -131,30 +132,28 @@ function move(gameState: GameState): MoveResponse {
 
   // Step 4 - Prevent getting close to other heads
   opponents.forEach(snake => {
-    if (snake.body.length >= gameState.you.body.length) {
-      if (isMoveSafe.left == 100) {
-        if ((snake.body[0].x == gameState.you.body[0].x - 1) && (Math.abs(snake.body[0].y - gameState.you.body[0].y) == 1) ||
-          (snake.body[0].x == gameState.you.body[0].x - 2) && (snake.body[0].y == gameState.you.body[0].y)) {
-          isMoveSafe.left = 50;
-        }
+    if (isMoveSafe.left == 100) {
+      if ((snake.body[0].x == gameState.you.body[0].x - 1) && (Math.abs(snake.body[0].y - gameState.you.body[0].y) == 1) ||
+        (snake.body[0].x == gameState.you.body[0].x - 2) && (snake.body[0].y == gameState.you.body[0].y)) {
+          isMoveSafe.left = rewardForHeadCollition(isMoveSafe.left, gameState.you, snake);
       }
-      if (isMoveSafe.right == 100) {
-        if ((snake.body[0].x == gameState.you.body[0].x + 1) && (Math.abs(snake.body[0].y - gameState.you.body[0].y) == 1) ||
-          (snake.body[0].x == gameState.you.body[0].x + 2) && (snake.body[0].y == gameState.you.body[0].y)) {
-          isMoveSafe.right = 50;
-        }
+    }
+    if (isMoveSafe.right == 100) {
+      if ((snake.body[0].x == gameState.you.body[0].x + 1) && (Math.abs(snake.body[0].y - gameState.you.body[0].y) == 1) ||
+        (snake.body[0].x == gameState.you.body[0].x + 2) && (snake.body[0].y == gameState.you.body[0].y)) {
+          isMoveSafe.right = rewardForHeadCollition(isMoveSafe.right, gameState.you, snake);
       }
-      if (isMoveSafe.down == 100) {
-        if ((snake.body[0].y == gameState.you.body[0].y - 1) && (Math.abs(snake.body[0].x - gameState.you.body[0].x) == 1) ||
-          (snake.body[0].y == gameState.you.body[0].y - 2) && (snake.body[0].x == gameState.you.body[0].x)) {
-          isMoveSafe.down = 50;
-        }
+    }
+    if (isMoveSafe.down == 100) {
+      if ((snake.body[0].y == gameState.you.body[0].y - 1) && (Math.abs(snake.body[0].x - gameState.you.body[0].x) == 1) ||
+        (snake.body[0].y == gameState.you.body[0].y - 2) && (snake.body[0].x == gameState.you.body[0].x)) {
+          isMoveSafe.down = rewardForHeadCollition(isMoveSafe.down, gameState.you, snake);
       }
-      if (isMoveSafe.up == 100) {
-        if ((snake.body[0].y == gameState.you.body[0].y + 1) && (Math.abs(snake.body[0].x - gameState.you.body[0].x) == 1) ||
-          (snake.body[0].y == gameState.you.body[0].y + 2) && (snake.body[0].x == gameState.you.body[0].x)) {
-          isMoveSafe.up = 50;
-        }
+    }
+    if (isMoveSafe.up == 100) {
+      if ((snake.body[0].y == gameState.you.body[0].y + 1) && (Math.abs(snake.body[0].x - gameState.you.body[0].x) == 1) ||
+        (snake.body[0].y == gameState.you.body[0].y + 2) && (snake.body[0].x == gameState.you.body[0].x)) {
+          isMoveSafe.up = rewardForHeadCollition(isMoveSafe.up, gameState.you, snake);
       }
     }
   });
@@ -165,15 +164,15 @@ function move(gameState: GameState): MoveResponse {
     gameState.board.food.forEach(food => {
       if (food.x == myHead.x) {
         if (food.y == myHead.y + 1) {
-          isMoveSafe.up += 5;
+          isMoveSafe.up += 10;
         } else if (food.y == myHead.y - 1) {
-          isMoveSafe.down += 5;
+          isMoveSafe.down += 10;
         }
       } else if (food.y == myHead.y) {
         if (food.x == myHead.x + 1) {
-          isMoveSafe.right += 5;
+          isMoveSafe.right += 10;
         } else if (food.x == myHead.x - 1) {
-          isMoveSafe.left += 5;
+          isMoveSafe.left += 10;
         }
       }
     });
@@ -203,11 +202,10 @@ function move(gameState: GameState): MoveResponse {
     }
   });
   possibleDirections.forEach(direction => {
-    if(directionScores[direction] < gameState.you.length - 2)
-    {
+    if (directionScores[direction] < gameState.you.length - 2) {
       isMoveSafe[direction] -= 20;
     }
-    if(directionScores[direction] == maxSpace) {
+    if (directionScores[direction] == maxSpace) {
       isMoveSafe[direction] += 1;
     }
   });

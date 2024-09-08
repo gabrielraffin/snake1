@@ -43,18 +43,3 @@ export function floodFill(
   
     return spaceSize;
   }
-  
-  export function bestDirection(start: Coord, gameState: GameState): keyof typeof directions | null {
-    let maxSpace = 0;
-    let bestDir: keyof typeof directions | null = null;
-  
-    for (const dir in directions) {
-      const space = floodFill(start, gameState, dir as keyof typeof directions);
-      if (space > maxSpace) {
-        maxSpace = space;
-        bestDir = dir as keyof typeof directions;
-      }
-    }
-  
-    return bestDir;
-  }
