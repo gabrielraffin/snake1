@@ -12,6 +12,8 @@
 
 import runServer from "./server";
 import { GameState, InfoResponse, MoveResponse } from "./types";
+import { directions } from "./utils";
+import { floodFill } from "./floodfill";
 
 // info is called when you create your Battlesnake on play.battlesnake.com
 // and controls your Battlesnake's appearance
@@ -106,7 +108,6 @@ function move(gameState: GameState): MoveResponse {
   }
 
   // Step 3 - Prevent your Battlesnake from colliding with other Battlesnakes
-
   const opponents = gameState.board.snakes.filter((snake) => snake.id !== gameState.you.id);
   console.log(`There are ${opponents.length} opponents`);
   opponents.forEach(snake => {
@@ -178,18 +179,43 @@ function move(gameState: GameState): MoveResponse {
     });
   }
 
+  // Step 6 eliminate death moves
   console.log("isMoveSafe = " + JSON.stringify(isMoveSafe));
-
-  // Are there any safe moves left?
-  const safeMoves = Object.keys(isMoveSafe).filter((key) => isMoveSafe[key] > 0);
-  if (safeMoves.length == 0) {
-    console.log(`MOVE ${gameState.turn}: No safe moves detected! Moving down`);
+  isMoveSafe = Object.fromEntries(
+    Object.entries(isMoveSafe).filter(([_, value]) => value > 0)
+  );
+  if (isMoveSafe.length == 0) {
     return { move: "down" };
+  } else if (isMoveSafe.length == 1) {
+    return { move: Object.keys(isMoveSafe)[0] };
   }
 
+  // Step 7 - Weight biggest free space area
+  const possibleDirections = Object.keys(isMoveSafe);
+  let maxSpace = 0;
+  let directionScores: { [key: string]: number } = {};
+  possibleDirections.forEach(direction => {
+    const space = floodFill(myHead, gameState, direction as keyof typeof directions);
+    console.log(`floodFill [${direction}] = ${space}`);
+    directionScores[direction] = space;
+    if (space > maxSpace) {
+      maxSpace = space;
+    }
+  });
+  possibleDirections.forEach(direction => {
+    if(directionScores[direction] < gameState.you.length - 2)
+    {
+      isMoveSafe[direction] -= 20;
+    }
+    if(directionScores[direction] == maxSpace) {
+      isMoveSafe[direction] += 1;
+    }
+  });
+
+  // Select randomly a direction among the equal max direction scores
+  console.log("isMoveSafe = " + JSON.stringify(isMoveSafe));
   const maxScore = Math.max(...Object.values(isMoveSafe));
   const bestMoves = Object.keys(isMoveSafe).filter((key) => isMoveSafe[key] == maxScore);
-
   console.log("maxScore = " + maxScore);
   console.log("bestMoves = " + JSON.stringify(bestMoves));
 
