@@ -190,18 +190,27 @@ function move(gameState: GameState): MoveResponse {
   });
 
   // Step 5 - Prefer food if starving
-  if (gameState.you.health <= 20) {
+  if (gameState.you.health <= 30) {
     console.log("Looking for food");
-    let directionFoodMargins: { [key: string]: number } = {};
+    let directionFoodMargins: { [key: string]: number } = {
+      up: -1,
+      down: -1,
+      left: -1,
+      right: -1
+    };
     let bestMargin: number = -1;
     gameState.board.food.forEach(food => {
       const path = aStarPathfinding(myHead, food, gameState);
       console.log(`path = ${JSON.stringify(path)}`);
       if (path) {
-        if (bestMargin < gameState.you.health - path.length) {
-          bestMargin = gameState.you.health - path.length;
+        const pathStartDirection = getDirection(myHead, path[0]);
+        const pathMargin = gameState.you.health - path.length;
+        if (directionFoodMargins[pathStartDirection] < pathMargin) {
+          directionFoodMargins[pathStartDirection] = pathMargin;
+          if (bestMargin < pathMargin) {
+            bestMargin = pathMargin;
+          }
         }
-        directionFoodMargins[getDirection(myHead, path[0])] = gameState.you.health - path.length;
       }
     });
     console.log(`directionFoodMargins = ${JSON.stringify(directionFoodMargins)}`);
