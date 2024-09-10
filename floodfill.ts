@@ -4,6 +4,7 @@ import { directions, isOutOfBounds, isObstacle, addContribution, probableObstacl
 export type floodFillResult = {
     spaceSize: number;
     numberOfEnemyHeads: number;
+    numberOfProbableHead: number;
     numberOfTails: number;
 }
 
@@ -15,6 +16,7 @@ export function floodFill(
     direction: keyof typeof directions
 ): floodFillResult {
     const visited = new Set<string>();
+    const countedHeadOrObstacle = new Set<string>();
     const queue: Coord[] = [];
     const width = gameState.board.width;
     const height = gameState.board.height;
@@ -23,7 +25,8 @@ export function floodFill(
     let result: floodFillResult = {
         spaceSize: 0,
         numberOfEnemyHeads: 0,
-        numberOfTails: 0
+        numberOfTails: 0,
+        numberOfProbableHead: 0
     };
 
     // Start flood fill in the specified direction
@@ -47,25 +50,34 @@ export function floodFill(
         // Explore neighbors in all four directions
         for (const dir in directions) {
             const next = { x: current.x + directions[dir].x, y: current.y + directions[dir].y };
+            const nextString = `${next.x},${next.y}`;
 
-            const isVisited = visited.has(`${next.x},${next.y}`);
+            const isVisited = visited.has(nextString);
             const isOut = isOutOfBounds(next, width, height);
+            const isProbableObstacle = probableObstacle(next, gameState.board);
+            const isSureObstacle = isObstacle(next, snakes);
 
             if (!isOut && !isVisited) {
                 const isHead = snakeHeads.find(coord => coord.x == next.x && coord.y == next.y);
-                if (isHead) {
+                if (isHead && !countedHeadOrObstacle.has(nextString)) {
                     result.numberOfEnemyHeads += 1;
+                    countedHeadOrObstacle.add(nextString);
+                } else if (!isSureObstacle && isProbableObstacle && !countedHeadOrObstacle.has(nextString)) {
+                    console.log(`add probable obstacle next = ${JSON.stringify(next)}`);
+                    result.numberOfProbableHead += 1;
+                    countedHeadOrObstacle.add(nextString);
                 }
             }
 
             if (
                 !isOut &&
                 !isVisited &&
-                !isObstacle(next, snakes) &&
-                !probableObstacle(initialCoord, gameState.board)
+                !isSureObstacle &&
+                !isProbableObstacle
             ) {
+                //console.log(`add next = ${JSON.stringify(next)}`);
                 queue.push(next);
-                visited.add(`${next.x},${next.y}`);
+                visited.add(nextString);
             }
         }
     }
@@ -85,14 +97,16 @@ export function floodFillContribution(gameState: GameState, rule: string,
     possibleDirections.forEach(direction => {
         const space = floodFill(gameState.you.body[0], gameState, direction as keyof typeof directions);
         console.log(`floodFill [${direction}] = ${JSON.stringify(space)}`);
+        console.log(`probableObstacle [5, 10] = ${probableObstacle({ x: 5, y: 10 }, gameState.board)}`);
         directionScores[direction] = space.spaceSize;
         if (space.spaceSize > maxSpace) {
             maxSpace = space.spaceSize;
         }
-        riskScores[direction] = space.numberOfEnemyHeads - space.numberOfTails;
-        numberOfHeads[direction] = space.numberOfEnemyHeads;
+        numberOfHeads[direction] = Math.max(space.numberOfEnemyHeads, Math.ceil(space.numberOfProbableHead / 2)); // May not be 100% accurate
+        riskScores[direction] = numberOfHeads[direction] - space.numberOfTails;
     });
     possibleDirections.forEach(direction => {
+        console.log(`direction ${direction} - score: ${directionScores[direction]}, maxSpace: ${maxSpace}, riskScore: ${riskScores[direction]}`);
         if (riskScores[direction] > 0) { // More heads, dangerous space
             if (directionScores[direction] < gameState.you.length + 20) {
                 addContribution(direction, rule, isPrediction ? -30 : -40, false, isMoveSafe, contributions);
