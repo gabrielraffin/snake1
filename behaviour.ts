@@ -1,6 +1,6 @@
 
 
-import { Battlesnake } from "./types";
+import { Battlesnake, Coord } from "./types";
 import { addContribution } from "./utils";
 
 
@@ -9,13 +9,16 @@ export function rewardForHeadCollition(dir: string,
     otherSnake: Battlesnake,
     numberOfOpponents: number,
     isMoveSafe: { [key: string]: number },
-    contributions: { [key: string]: { rule: string, contrib: number, absolute: boolean }[] }) {
+    contributions: { [key: string]: { rule: string, contrib: number, absolute: boolean }[] },
+    possibleLongEnemyHead: Coord[], 
+    enemyFutureHead: Coord) {
     if (numberOfOpponents > 1 && (otherSnake.name == "Behemoth" || otherSnake.name == "Killer whale")) {
         addContribution(dir, "snake-heads", -5, false, isMoveSafe, contributions);
         // Killing friend is bad (except when there is just us)
     }
     if (otherSnake.body.length >= me.body.length) {
         addContribution(dir, "snake-heads", 50, true, isMoveSafe, contributions);
+        possibleLongEnemyHead .push(enemyFutureHead);
     } else {
         addContribution(dir, "snake-heads", +5, false, isMoveSafe, contributions);
     }

@@ -11,7 +11,7 @@
 // For more info see docs.battlesnake.com
 
 import runServer from "./server";
-import { GameState, InfoResponse, MoveResponse } from "./types";
+import { GameState, InfoResponse, MoveResponse, Coord } from "./types";
 import { directions, getDirection, addContribution } from "./utils";
 import { floodFillContribution } from "./floodfill";
 import { aStarPathfinding } from "./pathfinding";
@@ -56,6 +56,8 @@ function move(gameState: GameState): MoveResponse {
     left: 100,
     right: 100,
   };
+
+  let possibleLongEnemyHead: Coord[] = [];
 
   let contributions: { [key: string]: { rule: string, contrib: number, absolute: boolean }[] } = {
     up: [],
@@ -147,25 +149,41 @@ function move(gameState: GameState): MoveResponse {
     if (isMoveSafe.left == 100) {
       if ((snake.body[0].x == gameState.you.body[0].x - 1) && (Math.abs(snake.body[0].y - gameState.you.body[0].y) == 1) ||
         (snake.body[0].x == gameState.you.body[0].x - 2) && (snake.body[0].y == gameState.you.body[0].y)) {
-        rewardForHeadCollition("left", gameState.you, snake, opponents.length, isMoveSafe, contributions);
+        rewardForHeadCollition("left", gameState.you, snake, opponents.length, isMoveSafe, contributions, possibleLongEnemyHead,
+          {
+            x: snake.body[0].x + directions["left"].x,
+            y: snake.body[0].y
+          });
       }
     }
     if (isMoveSafe.right == 100) {
       if ((snake.body[0].x == gameState.you.body[0].x + 1) && (Math.abs(snake.body[0].y - gameState.you.body[0].y) == 1) ||
         (snake.body[0].x == gameState.you.body[0].x + 2) && (snake.body[0].y == gameState.you.body[0].y)) {
-        rewardForHeadCollition("right", gameState.you, snake, opponents.length, isMoveSafe, contributions);
+        rewardForHeadCollition("right", gameState.you, snake, opponents.length, isMoveSafe, contributions, possibleLongEnemyHead,
+          {
+            x: snake.body[0].x + directions["right"].x,
+            y: snake.body[0].y
+          });
       }
     }
     if (isMoveSafe.down == 100) {
       if ((snake.body[0].y == gameState.you.body[0].y - 1) && (Math.abs(snake.body[0].x - gameState.you.body[0].x) == 1) ||
         (snake.body[0].y == gameState.you.body[0].y - 2) && (snake.body[0].x == gameState.you.body[0].x)) {
-        rewardForHeadCollition("down", gameState.you, snake, opponents.length, isMoveSafe, contributions);
+        rewardForHeadCollition("down", gameState.you, snake, opponents.length, isMoveSafe, contributions, possibleLongEnemyHead,
+          {
+            x: snake.body[0].x,
+            y: snake.body[0].y + directions["down"].y
+          });
       }
     }
     if (isMoveSafe.up == 100) {
       if ((snake.body[0].y == gameState.you.body[0].y + 1) && (Math.abs(snake.body[0].x - gameState.you.body[0].x) == 1) ||
         (snake.body[0].y == gameState.you.body[0].y + 2) && (snake.body[0].x == gameState.you.body[0].x)) {
-        rewardForHeadCollition("up", gameState.you, snake, opponents.length, isMoveSafe, contributions);
+        rewardForHeadCollition("up", gameState.you, snake, opponents.length, isMoveSafe, contributions, possibleLongEnemyHead,
+          {
+            x: snake.body[0].x,
+            y: snake.body[0].y + directions["down"].y
+          });
       }
     }
   });
@@ -271,13 +289,21 @@ function move(gameState: GameState): MoveResponse {
   gameState.board.futureHeads = [];
   opponents.forEach(snake => {
     for (const dir in directions) {
-      gameState.board.futureHeads?.push(
-        {
-          x: snake.body[0].x + directions[dir].x,
-          y: snake.body[0].y + directions[dir].y
-        })
+      const cellCoord: Coord = {
+        x: snake.body[0].x + directions[dir].x,
+        y: snake.body[0].y + directions[dir].y
+      };
+      if (cellCoord.x >= 0 && cellCoord.x < gameState.board.width && cellCoord.y >= 0 && cellCoord.y < gameState.board.height) {
+        const isPossibleContactHead = possibleLongEnemyHead.find(head => head.x == cellCoord.x && head.y == cellCoord.y );
+        if (!isPossibleContactHead) {
+          console.log(`add futureHead for ${dir} in ${JSON.stringify(cellCoord)}`);
+          gameState.board.futureHeads?.push(cellCoord);
+        }
+      }
     }
   });
+  console.log(`possibleLongEnemyHead = ${JSON.stringify(possibleLongEnemyHead)}`);
+  console.log(`futureHeads = ${JSON.stringify(gameState.board.futureHeads)}`);
   floodFillContribution(gameState, "predicted-floodfill", isMoveSafe, contributions);
 
   // Select randomly a direction among the equal max direction scores
