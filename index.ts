@@ -169,56 +169,28 @@ function move(gameState: GameState): MoveResponse {
   // Step 5 - Prefer food if starving
   if (gameState.you.health <= 20) {
     console.log("Looking for food");
-    let closestFoodDistance = 10000;
+    let directionFoodMargins: { [key: string]: number } = {};
+    let bestMargin: number = -1;
     gameState.board.food.forEach(food => {
-      if (food.x == myHead.x) {
-        if (food.y == myHead.y + 1) {
-          closestFoodDistance = 1;
-          addContribution("up", "food-immediate",
-            rewardForFood(gameState.you.health, closestFoodDistance),
-            false, isMoveSafe, contributions);
-        } else if (food.y == myHead.y - 1) {
-          closestFoodDistance = 1;
-          addContribution("down", "food-immediate",
-            rewardForFood(gameState.you.health, closestFoodDistance),
-            false, isMoveSafe, contributions);
+      const path = aStarPathfinding(myHead, food, gameState);
+      console.log(`path = ${JSON.stringify(path)}`);
+      if (path) {
+        if(bestMargin < gameState.you.health - path.length) {
+          bestMargin = gameState.you.health - path.length;
         }
-      } else if (food.y == myHead.y) {
-        if (food.x == myHead.x + 1) {
-          closestFoodDistance = 1;
-          addContribution("right", "food-immediate",
-            rewardForFood(gameState.you.health, closestFoodDistance),
-            false, isMoveSafe, contributions);
-        } else if (food.x == myHead.x - 1) {
-          closestFoodDistance = 1
-          addContribution("left", "food-immediate",
-            rewardForFood(gameState.you.health, closestFoodDistance),
-            false, isMoveSafe, contributions);
-        }
+        directionFoodMargins[getDirection(myHead, path[0])] = gameState.you.health - path.length;
       }
     });
-    if (closestFoodDistance > 1) { // There was no food next to our head
-      let bestDirections: string[] = [];
-      gameState.board.food.forEach(food => {
-        const path = aStarPathfinding(myHead, food, gameState);
-        console.log(`path = ${JSON.stringify(path)}`);
-        if (path) {
-          if (path.length < closestFoodDistance) {
-            closestFoodDistance = path.length;
-            bestDirections = [getDirection(myHead, path[0])];
-          } else if (path.length == closestFoodDistance) {
-            bestDirections.push(getDirection(myHead, path[0]));
-          }
-        }
-      });
-      console.log(`bestDirections = ${JSON.stringify(bestDirections)}`);
-      bestDirections.forEach(dir => {
+    console.log(`directionFoodMargins = ${JSON.stringify(directionFoodMargins)}`);
+    Object.keys(directionFoodMargins).forEach(dir => {
+      if (directionFoodMargins[dir] >= 0) {
         addContribution(dir, "food-distance",
-          rewardForFood(gameState.you.health, closestFoodDistance),
+          rewardForFood(directionFoodMargins[dir], bestMargin),
           false, isMoveSafe, contributions);
-      });
-    }
+      }
+    });
   }
+
 
   // Step 5.5 - Hasard
   if (gameState.board.hazards.length > 0) {
