@@ -12,7 +12,7 @@
 
 import runServer from "./server";
 import { GameState, InfoResponse, MoveResponse, Coord } from "./types";
-import { directions, getDirection, addContribution } from "./utils";
+import { directions, getDirection, addContribution, isObstacle, isOutOfBounds } from "./utils";
 import { floodFillContribution } from "./floodfill";
 import { aStarPathfinding } from "./pathfinding";
 import { rewardForHeadCollition, rewardForFood } from "./behaviour";
@@ -254,24 +254,85 @@ function move(gameState: GameState): MoveResponse {
     addContribution("right", "wall-borders", myHead.y == gameState.board.height - 3 ? -2 : -8, false, isMoveSafe, contributions);
     addContribution("left", "wall-borders", myHead.y == gameState.board.height - 3 ? -2 : -8, false, isMoveSafe, contributions);
   }
-  opponents.forEach(snake => {
-    for (let i = 0; i < snake.body.length - 1; i++) {
-      const element = snake.body[i];
-      if (element.x == myHead.x) {
-        if (element.y == myHead.y + 2 && isMoveSafe.up > -200) {
-          addContribution("up", "snake-proximity", -1, false, isMoveSafe, contributions);
-        } else if (element.y == myHead.y - 2 && isMoveSafe.down > -200) {
-          addContribution("down", "snake-proximity", -1, false, isMoveSafe, contributions);
-        }
-      } else if (element.y == myHead.y) {
-        if (element.x == myHead.x + 2 && isMoveSafe.right > -200) {
-          addContribution("right", "snake-proximity", -1, false, isMoveSafe, contributions);
-        } else if (element.x == myHead.x - 2 && isMoveSafe.left > -200) {
-          addContribution("left", "snake-proximity", -1, false, isMoveSafe, contributions);
-        }
-      }
+  if (isMoveSafe.up > -200) {
+    const newHead = { x: myHead.x + directions.up.x, y: myHead.y + directions.up.y };
+    let numberOfMove = 3;
+    if (isOutOfBounds(newHead, gameState.board.width, gameState.board.height) || isObstacle({ x: myHead.x + directions.up.x, y: myHead.y + directions.up.y }, gameState.board.snakes)) {
+      numberOfMove--;
     }
-  });
+    if (isOutOfBounds(newHead, gameState.board.width, gameState.board.height) || isObstacle({ x: myHead.x + directions.left.x, y: myHead.y + directions.left.y }, gameState.board.snakes)) {
+      numberOfMove--;
+    }
+    if (isOutOfBounds(newHead, gameState.board.width, gameState.board.height) || isObstacle({ x: myHead.x + directions.right.x, y: myHead.y + directions.right.y }, gameState.board.snakes)) {
+      numberOfMove--;
+    }
+    console.log(`number of free moves up: ${numberOfMove}`);
+    if (numberOfMove <= 1) { // Should not be 0
+      addContribution("up", "snake-proximity", -30, false, isMoveSafe, contributions);
+    } else if (numberOfMove == 2) {
+      addContribution("up", "snake-proximity", -12, false, isMoveSafe, contributions);
+    }
+  }
+
+  if (isMoveSafe.down > -200) {
+    const newHead = { x: myHead.x + directions.down.x, y: myHead.y + directions.down.y };
+    let numberOfMove = 3;
+    if (isOutOfBounds(newHead, gameState.board.width, gameState.board.height) || isObstacle({ x: newHead.x + directions.down.x, y: newHead.y + directions.down.y }, gameState.board.snakes)) {
+      numberOfMove--;
+    }
+    if (isOutOfBounds(newHead, gameState.board.width, gameState.board.height) || isObstacle({ x: newHead.x + directions.left.x, y: newHead.y + directions.left.y }, gameState.board.snakes)) {
+      numberOfMove--;
+    }
+    if (isOutOfBounds(newHead, gameState.board.width, gameState.board.height) || isObstacle({ x: newHead.x + directions.right.x, y: newHead.y + directions.right.y }, gameState.board.snakes)) {
+      numberOfMove--;
+    }
+    console.log(`number of free moves down: ${numberOfMove}`);
+    if (numberOfMove <= 1) { // Should not be 0
+      addContribution("down", "snake-proximity", -30, false, isMoveSafe, contributions);
+    } else if (numberOfMove == 2) {
+      addContribution("down", "snake-proximity", -12, false, isMoveSafe, contributions);
+    }
+  }
+
+  if (isMoveSafe.left > -200) {
+    const newHead = { x: myHead.x + directions.left.x, y: myHead.y + directions.left.y };
+    let numberOfMove = 3;
+    if (isOutOfBounds(newHead, gameState.board.width, gameState.board.height) || isObstacle({ x: newHead.x + directions.left.x, y: newHead.y + directions.left.y }, gameState.board.snakes)) {
+      numberOfMove--;
+    }
+    if (isOutOfBounds(newHead, gameState.board.width, gameState.board.height) || isObstacle({ x: newHead.x + directions.down.x, y: newHead.y + directions.down.y }, gameState.board.snakes)) {
+      numberOfMove--;
+    }
+    if (isOutOfBounds(newHead, gameState.board.width, gameState.board.height) || isObstacle({ x: newHead.x + directions.up.x, y: newHead.y + directions.up.y }, gameState.board.snakes)) {
+      numberOfMove--;
+    }
+    console.log(`number of free moves left: ${numberOfMove}`);
+    if (numberOfMove <= 1) { // Should not be 0
+      addContribution("left", "snake-proximity", -30, false, isMoveSafe, contributions);
+    } else if (numberOfMove == 2) {
+      addContribution("left", "snake-proximity", -12, false, isMoveSafe, contributions);
+    }
+  }
+
+  if (isMoveSafe.right > -200) {
+    const newHead = { x: myHead.x + directions.right.x, y: myHead.y + directions.right.y };
+    let numberOfMove = 3;
+    if (isOutOfBounds(newHead, gameState.board.width, gameState.board.height) || isObstacle({ x: newHead.x + directions.up.x, y: newHead.y + directions.up.y }, gameState.board.snakes)) {
+      numberOfMove--;
+    }
+    if (isOutOfBounds(newHead, gameState.board.width, gameState.board.height) || isObstacle({ x: newHead.x + directions.down.x, y: newHead.y + directions.down.y }, gameState.board.snakes)) {
+      numberOfMove--;
+    }
+    if (isOutOfBounds(newHead, gameState.board.width, gameState.board.height) || isObstacle({ x: newHead.x + directions.right.x, y: newHead.y + directions.right.y }, gameState.board.snakes)) {
+      numberOfMove--;
+    }
+    console.log(`number of free moves right: ${numberOfMove}`);
+    if (numberOfMove <= 1) { // Should not be 0
+      addContribution("right", "snake-proximity", -30, false, isMoveSafe, contributions);
+    } else if (numberOfMove == 2) {
+      addContribution("right", "snake-proximity", -12, false, isMoveSafe, contributions);
+    }
+  }
 
   // Step 8 eliminate death moves
   console.log("isMoveSafe = " + JSON.stringify(isMoveSafe));
@@ -295,7 +356,7 @@ function move(gameState: GameState): MoveResponse {
         y: snake.body[0].y + directions[dir].y
       };
       if (cellCoord.x >= 0 && cellCoord.x < gameState.board.width && cellCoord.y >= 0 && cellCoord.y < gameState.board.height) {
-        const isPossibleContactHead = possibleLongEnemyHead.find(head => head.x == cellCoord.x && head.y == cellCoord.y );
+        const isPossibleContactHead = possibleLongEnemyHead.find(head => head.x == cellCoord.x && head.y == cellCoord.y);
         if (!isPossibleContactHead) {
           console.log(`add futureHead for ${dir} in ${JSON.stringify(cellCoord)}`);
           gameState.board.futureHeads?.push(cellCoord);
