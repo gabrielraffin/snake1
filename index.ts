@@ -245,24 +245,39 @@ function move(gameState: GameState): MoveResponse {
   }
 
   // Step 7 - avoid proximity to borders and corners
-  if (myHead.x <= 2) {
-    addContribution("left", "wall-borders", myHead.x == 2 ? -5 : -10, false, isMoveSafe, contributions);
-    addContribution("up", "wall-borders", myHead.x == 2 ? -2 : -8, false, isMoveSafe, contributions);
-    addContribution("down", "wall-borders", myHead.x == 2 ? -2 : -8, false, isMoveSafe, contributions);
-  } else if (myHead.x >= gameState.board.width - 3) {
-    addContribution("right", "wall-borders", myHead.x == gameState.board.width - 3 ? -5 : -10, false, isMoveSafe, contributions);
-    addContribution("up", "wall-borders", myHead.x == gameState.board.width - 3 ? -2 : -8, false, isMoveSafe, contributions);
-    addContribution("down", "wall-borders", myHead.x == gameState.board.width - 3 ? -2 : -8, false, isMoveSafe, contributions);
+  if (myHead.x == 0) {
+    addContribution("right", "wall-borders", 25, false, isMoveSafe, contributions);
+  } else if (myHead.x == 1) {
+    addContribution("left", "wall-borders", -25, false, isMoveSafe, contributions);
+    addContribution("right", "wall-borders", 10, false, isMoveSafe, contributions);
+  } else if (myHead.x == 2) {
+    addContribution("left", "wall-borders", -10, false, isMoveSafe, contributions);
+
+  } else if (myHead.x == gameState.board.width - 1) {
+    addContribution("left", "wall-borders", 25, false, isMoveSafe, contributions);
+  } else if (myHead.x == gameState.board.width - 2) {
+    addContribution("left", "wall-borders", 10, false, isMoveSafe, contributions);
+    addContribution("right", "wall-borders", -25, false, isMoveSafe, contributions);
+  } else if (myHead.x == gameState.board.width - 3) {
+    addContribution("right", "wall-borders", -10, false, isMoveSafe, contributions);
   }
-  if (myHead.y <= 2) {
-    addContribution("down", "wall-borders", myHead.y == 2 ? -5 : -10, false, isMoveSafe, contributions);
-    addContribution("right", "wall-borders", myHead.y == 2 ? -2 : -8, false, isMoveSafe, contributions);
-    addContribution("left", "wall-borders", myHead.y == 2 ? -2 : -8, false, isMoveSafe, contributions);
-  } else if (myHead.y >= gameState.board.height - 3) {
-    addContribution("up", "wall-borders", myHead.y == gameState.board.height - 3 ? -5 : -10, false, isMoveSafe, contributions);
-    addContribution("right", "wall-borders", myHead.y == gameState.board.height - 3 ? -2 : -8, false, isMoveSafe, contributions);
-    addContribution("left", "wall-borders", myHead.y == gameState.board.height - 3 ? -2 : -8, false, isMoveSafe, contributions);
+  if (myHead.y == 0) {
+    addContribution("up", "wall-borders", 25, false, isMoveSafe, contributions);
+  } else if (myHead.y == 1) {
+    addContribution("down", "wall-borders", -25, false, isMoveSafe, contributions);
+    addContribution("up", "wall-borders", 10, false, isMoveSafe, contributions);
+  } else if (myHead.y == 2) {
+    addContribution("down", "wall-borders", -10, false, isMoveSafe, contributions);
+    
+  } else if (myHead.y == gameState.board.width - 1) {
+    addContribution("down", "wall-borders", 25, false, isMoveSafe, contributions);
+  } else if (myHead.y == gameState.board.width - 2) {
+    addContribution("down", "wall-borders", 10, false, isMoveSafe, contributions);
+    addContribution("up", "wall-borders", -25, false, isMoveSafe, contributions);
+  } else if (myHead.y == gameState.board.width - 3) {
+    addContribution("up", "wall-borders", -10, false, isMoveSafe, contributions);
   }
+
   if (isMoveSafe.up > -200) {
     const newHead = { x: myHead.x + directions.up.x, y: myHead.y + directions.up.y };
     let numberOfMove = 3;
