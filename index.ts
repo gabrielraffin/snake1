@@ -175,7 +175,7 @@ function move(gameState: GameState): MoveResponse {
       const path = aStarPathfinding(myHead, food, gameState);
       console.log(`path = ${JSON.stringify(path)}`);
       if (path) {
-        if(bestMargin < gameState.you.health - path.length) {
+        if (bestMargin < gameState.you.health - path.length) {
           bestMargin = gameState.you.health - path.length;
         }
         directionFoodMargins[getDirection(myHead, path[0])] = gameState.you.health - path.length;
@@ -192,7 +192,7 @@ function move(gameState: GameState): MoveResponse {
   }
 
 
-  // Step 5.5 - Hasard
+  // Step 6 - Hasard
   if (gameState.board.hazards.length > 0) {
     console.log("Looking for hasard");
     gameState.board.hazards.forEach(food => {
@@ -212,8 +212,45 @@ function move(gameState: GameState): MoveResponse {
     });
   }
 
+  // Step 7 - avoid proximity to borders and corners
+  if (myHead.x <= 2) {
+    addContribution("left", "wall-borders", myHead.x == 2 ? -5 : -10, false, isMoveSafe, contributions);
+    addContribution("up", "wall-borders", myHead.x == 2 ? -2 : -8, false, isMoveSafe, contributions);
+    addContribution("down", "wall-borders", myHead.x == 2 ? -2 : -8, false, isMoveSafe, contributions);
+  } else if (myHead.x >= gameState.board.width - 3) {
+    addContribution("right", "wall-borders", myHead.x == gameState.board.width - 3 ? -5 : -10, false, isMoveSafe, contributions);
+    addContribution("up", "wall-borders", myHead.x == gameState.board.width - 3 ? -2 : -8, false, isMoveSafe, contributions);
+    addContribution("down", "wall-borders", myHead.x == gameState.board.width - 3 ? -2 : -8, false, isMoveSafe, contributions);
+  }
+  if (myHead.y <= 2) {
+    addContribution("down", "wall-borders", myHead.y == 2 ? -5 : -10, false, isMoveSafe, contributions);
+    addContribution("right", "wall-borders", myHead.y == 2 ? -2 : -8, false, isMoveSafe, contributions);
+    addContribution("left", "wall-borders", myHead.y == 2 ? -2 : -8, false, isMoveSafe, contributions);
+  } else if (myHead.y >= gameState.board.height - 3) {
+    addContribution("up", "wall-borders", myHead.y == gameState.board.height - 3 ? -5 : -10, false, isMoveSafe, contributions);
+    addContribution("right", "wall-borders", myHead.y == gameState.board.height - 3 ? -2 : -8, false, isMoveSafe, contributions);
+    addContribution("left", "wall-borders", myHead.y == gameState.board.height - 3 ? -2 : -8, false, isMoveSafe, contributions);
+  }
+  opponents.forEach(snake => {
+    for (let i = 0; i < snake.body.length - 1; i++) {
+      const element = snake.body[i];
+      if (element.x == myHead.x) {
+        if (element.y == myHead.y + 2 && isMoveSafe.up > -200) {
+          addContribution("up", "snake-proximity", -1, false, isMoveSafe, contributions);
+        } else if (element.y == myHead.y - 2 && isMoveSafe.down > -200) {
+          addContribution("down", "snake-proximity", -1, false, isMoveSafe, contributions);
+        }
+      } else if (element.y == myHead.y) {
+        if (element.x == myHead.x + 2 && isMoveSafe.right > -200) {
+          addContribution("right", "snake-proximity", -1, false, isMoveSafe, contributions);
+        } else if (element.x == myHead.x - 2 && isMoveSafe.left > -200) {
+          addContribution("left", "snake-proximity", -1, false, isMoveSafe, contributions);
+        }
+      }
+    }
+  });
 
-  // Step 6 eliminate death moves
+  // Step 8 eliminate death moves
   console.log("isMoveSafe = " + JSON.stringify(isMoveSafe));
   isMoveSafe = Object.fromEntries(
     Object.entries(isMoveSafe).filter(([_, value]) => value > 0)
@@ -224,7 +261,7 @@ function move(gameState: GameState): MoveResponse {
     return { move: Object.keys(isMoveSafe)[0] };
   }
 
-  // Step 7 - Weight biggest free space area
+  // Step 9 - Weight biggest free space area
   const possibleDirections = Object.keys(isMoveSafe);
   let maxSpace = 0;
   let directionScores: { [key: string]: number } = {};
