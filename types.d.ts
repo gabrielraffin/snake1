@@ -31,6 +31,7 @@ export interface Board {
   hazards: Coord[];
   snakes: Battlesnake[];
   futureHeads?: Coord[];
+  queues?: Coord[];
 }
 
 export interface GameState {

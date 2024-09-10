@@ -67,8 +67,9 @@ function move(gameState: GameState): MoveResponse {
   };
 
   // remove snakes queues
-  gameState.you.body.pop();
-  gameState.board.snakes.forEach(snake => snake.body.pop());
+  gameState.board.queues = [];
+  gameState.board.queues.push(gameState.you.body.pop() as Coord);
+  gameState.board.snakes.forEach(snake => gameState.board.queues!.push(snake.body.pop() as Coord));
 
   // We've included code to prevent your Battlesnake from moving backwards
   const myHead = gameState.you.body[0];
