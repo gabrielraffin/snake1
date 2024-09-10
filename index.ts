@@ -16,6 +16,7 @@ import { directions, getDirection, addContribution, isObstacle, isOutOfBounds } 
 import { floodFillContribution } from "./floodfill";
 import { aStarPathfinding } from "./pathfinding";
 import { rewardForHeadCollition, rewardForFood } from "./behaviour";
+import { generateDangerHeatmap, MAX_DANGER } from "./dangerHeatMap";
 
 // info is called when you create your Battlesnake on play.battlesnake.com
 // and controls your Battlesnake's appearance
@@ -268,7 +269,7 @@ function move(gameState: GameState): MoveResponse {
     addContribution("up", "wall-borders", 10, false, isMoveSafe, contributions);
   } else if (myHead.y == 2) {
     addContribution("down", "wall-borders", -10, false, isMoveSafe, contributions);
-    
+
   } else if (myHead.y == gameState.board.width - 1) {
     addContribution("down", "wall-borders", 25, false, isMoveSafe, contributions);
   } else if (myHead.y == gameState.board.width - 2) {
@@ -395,6 +396,16 @@ function move(gameState: GameState): MoveResponse {
   console.log(`futureHeads = ${JSON.stringify(gameState.board.futureHeads)}`);
   floodFillContribution(gameState, "predicted-floodfill", isMoveSafe, contributions, true);
 
+  // Step 10 - Avoid coming closer to danger
+  const heatMap = generateDangerHeatmap(gameState, opponents);
+  Object.keys(isMoveSafe).forEach(dir => {
+    const next: Coord = { x: myHead.x + directions[dir].x, y: myHead.y + directions[dir].y };
+    const directionDangerLevel = heatMap[next.y][next.x];
+    // console.log(`Danger in (${dir} - ${next.x},${next.y}) = ${heatMap[next.y][next.x]}`);
+    addContribution(dir, "danger-gradient", 2 * (MAX_DANGER - directionDangerLevel), false, isMoveSafe, contributions);
+  });
+  // console.log(`heatMap = ${JSON.stringify(heatMap)}`);
+
   // Select randomly a direction among the equal max direction scores
   console.log("isMoveSafe = " + JSON.stringify(isMoveSafe));
   console.log("contributions = " + JSON.stringify(contributions));
@@ -405,9 +416,6 @@ function move(gameState: GameState): MoveResponse {
 
   // Choose a random move from the safe moves
   const nextMove = bestMoves[Math.floor(Math.random() * bestMoves.length)];
-
-  // TODO: Step 4 - Move towards food instead of random, to regain health and survive longer
-  // food = gameState.board.food;
 
   console.log(`MOVE ${gameState.turn}: ${nextMove}`);
   return { move: nextMove };
