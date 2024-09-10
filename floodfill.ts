@@ -41,20 +41,26 @@ export function floodFill(
         const isTail = gameState.board.queues!.find(coord => coord.x == current.x && coord.y == current.y);
         if (isTail) {
             result.numberOfTails += 1;
-        } else {
-            const isHead = snakeHeads.find(coord => coord.x == current.x && coord.y == current.y);
-            if (isHead) {
-                result.numberOfEnemyHeads += 1;
-            }
         }
         result.spaceSize++;
 
         // Explore neighbors in all four directions
         for (const dir in directions) {
             const next = { x: current.x + directions[dir].x, y: current.y + directions[dir].y };
+
+            const isVisited = visited.has(`${next.x},${next.y}`);
+            const isOut = isOutOfBounds(next, width, height);
+
+            if (!isOut && !isVisited) {
+                const isHead = snakeHeads.find(coord => coord.x == next.x && coord.y == next.y);
+                if (isHead) {
+                    result.numberOfEnemyHeads += 1;
+                }
+            }
+
             if (
-                !isOutOfBounds(next, width, height) &&
-                !visited.has(`${next.x},${next.y}`) &&
+                !isOut &&
+                !isVisited &&
                 !isObstacle(next, snakes) &&
                 !probableObstacle(initialCoord, gameState.board)
             ) {
@@ -63,22 +69,22 @@ export function floodFill(
             }
         }
     }
-
+    result.numberOfEnemyHeads--; // Remove my own head
     return result;
 }
 
 export function floodFillContribution(gameState: GameState, rule: string,
     isMoveSafe: { [key: string]: number },
-    contributions: { [key: string]: { rule: string, contrib: number, absolute: boolean }[] }) {
+    contributions: { [key: string]: { rule: string, contrib: number, absolute: boolean }[] },
+    isPrediction: boolean) {
     const possibleDirections = Object.keys(isMoveSafe);
     let maxSpace = 0;
-    let minHeads = 10;
     let directionScores: { [key: string]: number } = {};
     let riskScores: { [key: string]: number } = {};
     let numberOfHeads: { [key: string]: number } = {};
     possibleDirections.forEach(direction => {
         const space = floodFill(gameState.you.body[0], gameState, direction as keyof typeof directions);
-        console.log(`floodFill [${direction}] = ${space}`);
+        console.log(`floodFill [${direction}] = ${JSON.stringify(space)}`);
         directionScores[direction] = space.spaceSize;
         if (space.spaceSize > maxSpace) {
             maxSpace = space.spaceSize;
@@ -89,18 +95,21 @@ export function floodFillContribution(gameState: GameState, rule: string,
     possibleDirections.forEach(direction => {
         if (riskScores[direction] > 0) { // More heads, dangerous space
             if (directionScores[direction] < gameState.you.length + 20) {
-                addContribution(direction, rule, -40, false, isMoveSafe, contributions);
+                addContribution(direction, rule, isPrediction ? -30 : -40, false, isMoveSafe, contributions);
             } else {
-                addContribution(direction, rule, -15, false, isMoveSafe, contributions);
+                addContribution(direction, rule, isPrediction ? -10 : -15, false, isMoveSafe, contributions);
             }
         } else if (riskScores[direction] == 0) { // Space size will be stable
+            let contribscore = isPrediction ? 2 : 0;
             if (directionScores[direction] < gameState.you.length + 2) {
-                addContribution(direction, rule, directionScores[direction] == maxSpace ? -10 : -20, false, isMoveSafe, contributions);
+                contribscore += directionScores[direction] == maxSpace ? -10 : -20;
+                addContribution(direction, rule, contribscore, false, isMoveSafe, contributions);
             } else {
-                addContribution(direction, rule, directionScores[direction] == maxSpace ? -5 : -10, false, isMoveSafe, contributions);
+                contribscore += directionScores[direction] == maxSpace ? -5 : -10;
+                addContribution(direction, rule, contribscore, false, isMoveSafe, contributions);
             }
         } else if (riskScores[direction] < 0) { // More tails, his space will grow
-            addContribution(direction, rule, 4, false, isMoveSafe, contributions);
+            addContribution(direction, rule, isPrediction ? 2 : 4, false, isMoveSafe, contributions);
         }
     });
 }

@@ -285,7 +285,7 @@ function move(gameState: GameState): MoveResponse {
   }
 
   // Step 9 - Weight biggest free space area
-  floodFillContribution(gameState, "floodfill", isMoveSafe, contributions);
+  floodFillContribution(gameState, "floodfill", isMoveSafe, contributions, false);
   // With extra heads
   gameState.board.futureHeads = [];
   opponents.forEach(snake => {
@@ -305,7 +305,7 @@ function move(gameState: GameState): MoveResponse {
   });
   console.log(`possibleLongEnemyHead = ${JSON.stringify(possibleLongEnemyHead)}`);
   console.log(`futureHeads = ${JSON.stringify(gameState.board.futureHeads)}`);
-  floodFillContribution(gameState, "predicted-floodfill", isMoveSafe, contributions);
+  floodFillContribution(gameState, "predicted-floodfill", isMoveSafe, contributions, true);
 
   // Select randomly a direction among the equal max direction scores
   console.log("isMoveSafe = " + JSON.stringify(isMoveSafe));
