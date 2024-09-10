@@ -257,16 +257,19 @@ function move(gameState: GameState): MoveResponse {
   if (isMoveSafe.up > -200) {
     const newHead = { x: myHead.x + directions.up.x, y: myHead.y + directions.up.y };
     let numberOfMove = 3;
-    if (isOutOfBounds(newHead, gameState.board.width, gameState.board.height) || isObstacle({ x: myHead.x + directions.up.x, y: myHead.y + directions.up.y }, gameState.board.snakes)) {
+    if (isOutOfBounds(newHead, gameState.board.width, gameState.board.height) || isObstacle({ x: newHead.x + directions.up.x, y: newHead.y + directions.up.y }, gameState.board.snakes)) {
+      //console.log(`up is touching ${JSON.stringify({ x: newHead.x + directions.up.x, y: newHead.y + directions.up.y })}`);
       numberOfMove--;
     }
-    if (isOutOfBounds(newHead, gameState.board.width, gameState.board.height) || isObstacle({ x: myHead.x + directions.left.x, y: myHead.y + directions.left.y }, gameState.board.snakes)) {
+    if (isOutOfBounds(newHead, gameState.board.width, gameState.board.height) || isObstacle({ x: newHead.x + directions.left.x, y: newHead.y + directions.left.y }, gameState.board.snakes)) {
+      //console.log(`left is touching ${JSON.stringify({ x: newHead.x + directions.left.x, y: newHead.y + directions.left.y })}`);
       numberOfMove--;
     }
-    if (isOutOfBounds(newHead, gameState.board.width, gameState.board.height) || isObstacle({ x: myHead.x + directions.right.x, y: myHead.y + directions.right.y }, gameState.board.snakes)) {
+    if (isOutOfBounds(newHead, gameState.board.width, gameState.board.height) || isObstacle({ x: newHead.x + directions.right.x, y: newHead.y + directions.right.y }, gameState.board.snakes)) {
+      //console.log(`right is touching ${JSON.stringify({ x: newHead.x + directions.right.x, y: newHead.y + directions.right.y })}`);
       numberOfMove--;
     }
-    console.log(`number of free moves up: ${numberOfMove}`);
+    console.log(`number of free moves up: ${numberOfMove} - newHead ${JSON.stringify(newHead)}`);
     if (numberOfMove <= 1) { // Should not be 0
       addContribution("up", "snake-proximity", -30, false, isMoveSafe, contributions);
     } else if (numberOfMove == 2) {
