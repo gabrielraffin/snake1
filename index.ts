@@ -12,9 +12,10 @@
 
 import runServer from "./server";
 import { GameState, InfoResponse, MoveResponse } from "./types";
-import { directions } from "./utils";
+import { directions, getDirection, addContribution } from "./utils";
 import { floodFill } from "./floodfill";
-import { rewardForHeadCollition } from "./behaviour";
+import { aStarPathfinding } from "./pathfinding";
+import { rewardForHeadCollition, rewardForFood } from "./behaviour";
 
 // info is called when you create your Battlesnake on play.battlesnake.com
 // and controls your Battlesnake's appearance
@@ -56,22 +57,29 @@ function move(gameState: GameState): MoveResponse {
     right: 100,
   };
 
+  let contributions: { [key: string]: { rule: string, contrib: number, absolute: boolean }[] } = {
+    up: [],
+    down: [],
+    left: [],
+    right: [],
+  };
+
   // We've included code to prevent your Battlesnake from moving backwards
   const myHead = gameState.you.body[0];
   const myNeck = gameState.you.body[1];
 
   if (myNeck.x < myHead.x) {
     // Neck is left of head, don't move left
-    isMoveSafe.left = -100;
+    addContribution("left", "backward", -1000, true, isMoveSafe, contributions);
   } else if (myNeck.x > myHead.x) {
     // Neck is right of head, don't move right
-    isMoveSafe.right = -100;
+    addContribution("right", "backward", -1000, true, isMoveSafe, contributions);
   } else if (myNeck.y < myHead.y) {
     // Neck is below head, don't move down
-    isMoveSafe.down = -100;
+    addContribution("down", "backward", -1000, true, isMoveSafe, contributions);
   } else if (myNeck.y > myHead.y) {
     // Neck is above head, don't move up
-    isMoveSafe.up = -100;
+    addContribution("up", "backward", -1000, true, isMoveSafe, contributions);
   }
 
   // Step 1 - Prevent your Battlesnake from moving out of bounds
@@ -79,31 +87,31 @@ function move(gameState: GameState): MoveResponse {
   // boardHeight = gameState.board.height;
 
   if (myHead.x == 0) {
-    isMoveSafe.left = -100;
+    addContribution("left", "wall", -1000, true, isMoveSafe, contributions);
   } else if (myHead.x + 1 == gameState.board.width) {
-    isMoveSafe.right = -100;
+    addContribution("right", "wall", -1000, true, isMoveSafe, contributions);
   }
   if (myHead.y == 0) {
-    isMoveSafe.down = -100;
+    addContribution("down", "wall", -1000, true, isMoveSafe, contributions);
   } else if (myHead.y + 1 == gameState.board.height) {
-    isMoveSafe.up = -100;
+    addContribution("up", "wall", -1000, true, isMoveSafe, contributions);
   }
 
   // Step 2 - Prevent your Battlesnake from colliding with itself
   const myBody = gameState.you.body;
-  for (let i = 1; i < myBody.length - 1; i++) {
+  for (let i = 2; i < myBody.length - 1; i++) {
     const element = myBody[i];
     if (element.x == myHead.x) {
       if (element.y == myHead.y + 1) {
-        isMoveSafe.up = -100;
+        addContribution("up", "own-body", -1000, true, isMoveSafe, contributions);
       } else if (element.y == myHead.y - 1) {
-        isMoveSafe.down = -100;
+        addContribution("down", "own-body", -1000, true, isMoveSafe, contributions);
       }
     } else if (element.y == myHead.y) {
       if (element.x == myHead.x + 1) {
-        isMoveSafe.right = -100;
+        addContribution("right", "own-body", -1000, true, isMoveSafe, contributions);
       } else if (element.x == myHead.x - 1) {
-        isMoveSafe.left = -100;
+        addContribution("left", "own-body", -1000, true, isMoveSafe, contributions);
       }
     }
   }
@@ -116,15 +124,15 @@ function move(gameState: GameState): MoveResponse {
       const element = snake.body[i];
       if (element.x == myHead.x) {
         if (element.y == myHead.y + 1) {
-          isMoveSafe.up = -100;
+          addContribution("up", "snake-body", -1000, true, isMoveSafe, contributions);
         } else if (element.y == myHead.y - 1) {
-          isMoveSafe.down = -100;
+          addContribution("down", "snake-body", -1000, true, isMoveSafe, contributions);
         }
       } else if (element.y == myHead.y) {
         if (element.x == myHead.x + 1) {
-          isMoveSafe.right = -100;
+          addContribution("right", "snake-body", -1000, true, isMoveSafe, contributions);
         } else if (element.x == myHead.x - 1) {
-          isMoveSafe.left = -100;
+          addContribution("left", "snake-body", -1000, true, isMoveSafe, contributions);
         }
       }
     }
@@ -135,48 +143,103 @@ function move(gameState: GameState): MoveResponse {
     if (isMoveSafe.left == 100) {
       if ((snake.body[0].x == gameState.you.body[0].x - 1) && (Math.abs(snake.body[0].y - gameState.you.body[0].y) == 1) ||
         (snake.body[0].x == gameState.you.body[0].x - 2) && (snake.body[0].y == gameState.you.body[0].y)) {
-          isMoveSafe.left = rewardForHeadCollition(isMoveSafe.left, gameState.you, snake);
+        rewardForHeadCollition("left", gameState.you, snake, opponents.length, isMoveSafe, contributions);
       }
     }
     if (isMoveSafe.right == 100) {
       if ((snake.body[0].x == gameState.you.body[0].x + 1) && (Math.abs(snake.body[0].y - gameState.you.body[0].y) == 1) ||
         (snake.body[0].x == gameState.you.body[0].x + 2) && (snake.body[0].y == gameState.you.body[0].y)) {
-          isMoveSafe.right = rewardForHeadCollition(isMoveSafe.right, gameState.you, snake);
+        rewardForHeadCollition("right", gameState.you, snake, opponents.length, isMoveSafe, contributions);
       }
     }
     if (isMoveSafe.down == 100) {
       if ((snake.body[0].y == gameState.you.body[0].y - 1) && (Math.abs(snake.body[0].x - gameState.you.body[0].x) == 1) ||
         (snake.body[0].y == gameState.you.body[0].y - 2) && (snake.body[0].x == gameState.you.body[0].x)) {
-          isMoveSafe.down = rewardForHeadCollition(isMoveSafe.down, gameState.you, snake);
+        rewardForHeadCollition("down", gameState.you, snake, opponents.length, isMoveSafe, contributions);
       }
     }
     if (isMoveSafe.up == 100) {
       if ((snake.body[0].y == gameState.you.body[0].y + 1) && (Math.abs(snake.body[0].x - gameState.you.body[0].x) == 1) ||
         (snake.body[0].y == gameState.you.body[0].y + 2) && (snake.body[0].x == gameState.you.body[0].x)) {
-          isMoveSafe.up = rewardForHeadCollition(isMoveSafe.up, gameState.you, snake);
+        rewardForHeadCollition("up", gameState.you, snake, opponents.length, isMoveSafe, contributions);
       }
     }
   });
 
   // Step 5 - Prefer food if starving
-  if (gameState.you.health <= 8) {
+  if (gameState.you.health <= 20) {
     console.log("Looking for food");
+    let closestFoodDistance = 10000;
     gameState.board.food.forEach(food => {
       if (food.x == myHead.x) {
         if (food.y == myHead.y + 1) {
-          isMoveSafe.up += 10;
+          closestFoodDistance = 1;
+          addContribution("up", "food-immediate",
+            rewardForFood(gameState.you.health, closestFoodDistance),
+            false, isMoveSafe, contributions);
         } else if (food.y == myHead.y - 1) {
-          isMoveSafe.down += 10;
+          closestFoodDistance = 1;
+          addContribution("down", "food-immediate",
+            rewardForFood(gameState.you.health, closestFoodDistance),
+            false, isMoveSafe, contributions);
         }
       } else if (food.y == myHead.y) {
         if (food.x == myHead.x + 1) {
-          isMoveSafe.right += 10;
+          closestFoodDistance = 1;
+          addContribution("right", "food-immediate",
+            rewardForFood(gameState.you.health, closestFoodDistance),
+            false, isMoveSafe, contributions);
         } else if (food.x == myHead.x - 1) {
-          isMoveSafe.left += 10;
+          closestFoodDistance = 1
+          addContribution("left", "food-immediate",
+            rewardForFood(gameState.you.health, closestFoodDistance),
+            false, isMoveSafe, contributions);
+        }
+      }
+    });
+    if (closestFoodDistance > 1) { // There was no food next to our head
+      let bestDirections: string[] = [];
+      gameState.board.food.forEach(food => {
+        const path = aStarPathfinding(myHead, food, gameState);
+        console.log(`path = ${JSON.stringify(path)}`);
+        if (path) {
+          if (path.length < closestFoodDistance) {
+            closestFoodDistance = path.length;
+            bestDirections = [getDirection(myHead, path[0])];
+          } else if (path.length == closestFoodDistance) {
+            bestDirections.push(getDirection(myHead, path[0]));
+          }
+        }
+      });
+      console.log(`bestDirections = ${JSON.stringify(bestDirections)}`);
+      bestDirections.forEach(dir => {
+        addContribution(dir, "food-distance",
+          rewardForFood(gameState.you.health, closestFoodDistance),
+          false, isMoveSafe, contributions);
+      });
+    }
+  }
+
+  // Step 5.5 - Hasard
+  if (gameState.board.hazards.length > 0) {
+    console.log("Looking for hasard");
+    gameState.board.hazards.forEach(food => {
+      if (food.x == myHead.x) {
+        if (food.y == myHead.y + 1) {
+          addContribution("up", "hasard", -40, false, isMoveSafe, contributions);
+        } else if (food.y == myHead.y - 1) {
+          addContribution("down", "hasard", -40, false, isMoveSafe, contributions);
+        }
+      } else if (food.y == myHead.y) {
+        if (food.x == myHead.x + 1) {
+          addContribution("right", "hasard", -40, false, isMoveSafe, contributions);
+        } else if (food.x == myHead.x - 1) {
+          addContribution("left", "hasard", -40, false, isMoveSafe, contributions);
         }
       }
     });
   }
+
 
   // Step 6 eliminate death moves
   console.log("isMoveSafe = " + JSON.stringify(isMoveSafe));
@@ -203,15 +266,16 @@ function move(gameState: GameState): MoveResponse {
   });
   possibleDirections.forEach(direction => {
     if (directionScores[direction] < gameState.you.length - 2) {
-      isMoveSafe[direction] -= 20;
+      addContribution(direction, "floodFill", -20, false, isMoveSafe, contributions);
     }
     if (directionScores[direction] == maxSpace) {
-      isMoveSafe[direction] += 1;
+      addContribution(direction, "floodFill", 1, false, isMoveSafe, contributions);
     }
   });
 
   // Select randomly a direction among the equal max direction scores
   console.log("isMoveSafe = " + JSON.stringify(isMoveSafe));
+  console.log("contributions = " + JSON.stringify(contributions));
   const maxScore = Math.max(...Object.values(isMoveSafe));
   const bestMoves = Object.keys(isMoveSafe).filter((key) => isMoveSafe[key] == maxScore);
   console.log("maxScore = " + maxScore);

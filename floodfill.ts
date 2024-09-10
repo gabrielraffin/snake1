@@ -1,6 +1,14 @@
 import { Coord, GameState } from "./types"
 import { directions, isOutOfBounds, isObstacle } from "./utils"
 
+export type floodFillResult = {
+    spaceSize: number;
+    numberOfEnemyHeads: number;
+    numberOfTails: number;
+}
+
+// TODO return struct from floodFill
+
 export function floodFill(
     start: Coord,
     gameState: GameState,
