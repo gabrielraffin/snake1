@@ -13,7 +13,7 @@
 import runServer from "./server";
 import { GameState, InfoResponse, MoveResponse } from "./types";
 import { directions, getDirection, addContribution } from "./utils";
-import { floodFill } from "./floodfill";
+import { floodFillContribution } from "./floodfill";
 import { aStarPathfinding } from "./pathfinding";
 import { rewardForHeadCollition, rewardForFood } from "./behaviour";
 
@@ -64,6 +64,10 @@ function move(gameState: GameState): MoveResponse {
     right: [],
   };
 
+  // remove snakes queues
+  gameState.you.body.pop();
+  gameState.board.snakes.forEach(snake => snake.body.pop());
+
   // We've included code to prevent your Battlesnake from moving backwards
   const myHead = gameState.you.body[0];
   const myNeck = gameState.you.body[1];
@@ -99,7 +103,7 @@ function move(gameState: GameState): MoveResponse {
 
   // Step 2 - Prevent your Battlesnake from colliding with itself
   const myBody = gameState.you.body;
-  for (let i = 2; i < myBody.length - 1; i++) {
+  for (let i = 2; i < myBody.length; i++) {
     const element = myBody[i];
     if (element.x == myHead.x) {
       if (element.y == myHead.y + 1) {
@@ -120,7 +124,7 @@ function move(gameState: GameState): MoveResponse {
   const opponents = gameState.board.snakes.filter((snake) => snake.id !== gameState.you.id);
   console.log(`There are ${opponents.length} opponents`);
   opponents.forEach(snake => {
-    for (let i = 0; i < snake.body.length - 1; i++) {
+    for (let i = 0; i < snake.body.length; i++) {
       const element = snake.body[i];
       if (element.x == myHead.x) {
         if (element.y == myHead.y + 1) {
@@ -262,25 +266,19 @@ function move(gameState: GameState): MoveResponse {
   }
 
   // Step 9 - Weight biggest free space area
-  const possibleDirections = Object.keys(isMoveSafe);
-  let maxSpace = 0;
-  let directionScores: { [key: string]: number } = {};
-  possibleDirections.forEach(direction => {
-    const space = floodFill(myHead, gameState, direction as keyof typeof directions);
-    console.log(`floodFill [${direction}] = ${space}`);
-    directionScores[direction] = space;
-    if (space > maxSpace) {
-      maxSpace = space;
+  floodFillContribution(gameState, "floodfill", isMoveSafe, contributions);
+  // With extra heads
+  gameState.board.futureHeads = [];
+  opponents.forEach(snake => {
+    for (const dir in directions) {
+      gameState.board.futureHeads?.push(
+        {
+          x: snake.body[0].x + directions[dir].x,
+          y: snake.body[0].y + directions[dir].y
+        })
     }
   });
-  possibleDirections.forEach(direction => {
-    if (directionScores[direction] < gameState.you.length - 2) {
-      addContribution(direction, "floodFill", -20, false, isMoveSafe, contributions);
-    }
-    if (directionScores[direction] == maxSpace) {
-      addContribution(direction, "floodFill", 1, false, isMoveSafe, contributions);
-    }
-  });
+  floodFillContribution(gameState, "predicted-floodfill", isMoveSafe, contributions);
 
   // Select randomly a direction among the equal max direction scores
   console.log("isMoveSafe = " + JSON.stringify(isMoveSafe));

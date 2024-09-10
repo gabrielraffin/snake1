@@ -1,4 +1,4 @@
-import { Coord } from "./types"
+import { Coord, Board } from "./types"
 
 export const directions: { [key: string]: Coord } = {
     up: { x: 0, y: 1 },
@@ -36,6 +36,14 @@ export function isOutOfBounds(Coord: Coord, width: number, height: number): bool
 
 export function isObstacle(Coord: Coord, snakes: { id: string; body: Coord[] }[]): boolean {
     return snakes.some(snake => snake.body.some(snakePart => snakePart.x === Coord.x && snakePart.y === Coord.y));
+}
+export function probableObstacle(Coord: Coord, board: Board): boolean {
+    if(board.futureHeads)
+    {
+        return board.futureHeads.some(futureHead => futureHead.x === Coord.x && futureHead.y === Coord.y)
+    } else {
+        return false;
+    }
 }
 
 export function addContribution(dir: string,

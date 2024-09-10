@@ -30,6 +30,7 @@ export interface Board {
   food: Coord[];
   hazards: Coord[];
   snakes: Battlesnake[];
+  futureHeads?: Coord[];
 }
 
 export interface GameState {
