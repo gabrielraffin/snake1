@@ -26,7 +26,7 @@ export function rewardForFood(health: number, distance: number): number {
     if (survivalMargin > 8) {
         return 0;
     } else if (survivalMargin == 0) {
-        return 200;
+        return 120;
     } else if (survivalMargin == 1) {
         return 100;
     }else if (survivalMargin == 2) {
