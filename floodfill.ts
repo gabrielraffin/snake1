@@ -118,7 +118,7 @@ export function floodFillContribution(gameState: GameState, rule: string,
         } else if (riskScores[direction] == 0) { // Space size will be stable
             let contribscore = isPrediction ? 2 : 0;
             if (directionScores[direction] < gameState.you.length) {
-                contribscore += isPrediction ? -50 : -100;
+                contribscore += isPrediction ? -15 : -25;
                 addContribution(direction, rule, contribscore, false, isMoveSafe, contributions);
             } else if (directionScores[direction] < gameState.you.length + 2) {
                 contribscore += directionScores[direction] == maxSpace ? -10 : -20;
