@@ -192,7 +192,9 @@ function move(gameState: GameState): MoveResponse {
 
   // Step 5 - Prefer food if starving
   if (gameState.you.health <= 30 || 
-    (gameState.you.health <= 60 && gameState.board.food.length < 4)) { // The threshold logic could be adjusted to number of snake
+    (gameState.you.health <= 72 && gameState.board.food.length == 1) ||
+    (gameState.you.health <= 65 && gameState.board.food.length == 2) ||
+    (gameState.you.health <= 60 && gameState.board.food.length <= 4)) { // The threshold logic could be adjusted to number of snake
     console.log("Looking for food");
     let directionFoodMargins: { [key: string]: number } = {
       up: -1,
