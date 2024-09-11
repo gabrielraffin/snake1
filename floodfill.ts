@@ -107,7 +107,7 @@ export function floodFillContribution(gameState: GameState, rule: string,
     });
     possibleDirections.forEach(direction => {
         console.log(`direction ${direction} - score: ${directionScores[direction]}, maxSpace: ${maxSpace}, riskScore: ${riskScores[direction]}`);
-        if (riskScores[direction] > 0) { // More heads, dangerous space
+        if (riskScores[direction] > -1) { // More heads, dangerous space
             if (directionScores[direction] < gameState.you.length) {
                 addContribution(direction, rule, isPrediction ? -80 : -120, false, isMoveSafe, contributions);
             } if (directionScores[direction] < gameState.you.length + 20) {
@@ -115,7 +115,7 @@ export function floodFillContribution(gameState: GameState, rule: string,
             } else {
                 addContribution(direction, rule, isPrediction ? -10 : -15, false, isMoveSafe, contributions);
             }
-        } else if (riskScores[direction] == 0) { // Space size will be stable
+        } else if (riskScores[direction] == -1) { // Space size will be stable
             let contribscore = isPrediction ? 2 : 0;
             if (directionScores[direction] < gameState.you.length) {
                 contribscore += isPrediction ? -15 : -25;
