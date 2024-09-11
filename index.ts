@@ -405,7 +405,7 @@ function move(gameState: GameState): MoveResponse {
     const next: Coord = { x: myHead.x + directions[dir].x, y: myHead.y + directions[dir].y };
     const directionDangerLevel = heatMap[next.y][next.x];
     // console.log(`Danger in (${dir} - ${next.x},${next.y}) = ${heatMap[next.y][next.x]}`);
-    addContribution(dir, "danger-gradient", 2 * (MAX_DANGER - directionDangerLevel), false, isMoveSafe, contributions);
+    addContribution(dir, "danger-gradient", 3 * (MAX_DANGER - directionDangerLevel), false, isMoveSafe, contributions);
   });
   // console.log(`heatMap = ${JSON.stringify(heatMap)}`);
 

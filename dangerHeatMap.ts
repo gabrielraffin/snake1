@@ -1,7 +1,7 @@
 import { Coord, GameState, Battlesnake } from "./types"
 import { directions, isOutOfBounds, isObstacle, addContribution, } from "./utils"
 
-export const MAX_DANGER: number = 5;
+export const MAX_DANGER: number = 7;
 
 export function generateDangerHeatmap(gameState: GameState, opponents: Battlesnake[]): number[][] {
     const { width, height } = gameState.board;
