@@ -10,7 +10,7 @@ export function rewardForHeadCollition(dir: string,
     numberOfOpponents: number,
     isMoveSafe: { [key: string]: number },
     contributions: { [key: string]: { rule: string, contrib: number, absolute: boolean }[] },
-    possibleLongEnemyHead: Coord[], 
+    possibleLongEnemyHead: Coord[],
     enemyFutureHead: Coord) {
     if (numberOfOpponents > 1 && (otherSnake.name == "Behemoth" || otherSnake.name == "Killer whale")) {
         addContribution(dir, "snake-heads", -5, false, isMoveSafe, contributions);
@@ -18,28 +18,41 @@ export function rewardForHeadCollition(dir: string,
     }
     if (otherSnake.body.length >= me.body.length) {
         addContribution(dir, "snake-heads", 50, true, isMoveSafe, contributions);
-        possibleLongEnemyHead .push(enemyFutureHead);
+        possibleLongEnemyHead.push(enemyFutureHead);
     } else {
         addContribution(dir, "snake-heads", +5, false, isMoveSafe, contributions);
     }
 }
 
-export function rewardForFood(survivalMargin: number, bestMargin: number): number {
+export function rewardForFood(survivalMargin: number, bestMargin: number, foodQty: number, myHealth: number): number {
     if (survivalMargin == bestMargin) {
+        let foodScore = 10; // margin from 6 to 8
         if (survivalMargin > 10) {
-            return 0;
+            foodScore = 0;
         } else if (survivalMargin == 0) {
-            return 120;
+            foodScore = 120;
         } else if (survivalMargin == 1) {
-            return 100;
+            foodScore = 100;
         } else if (survivalMargin == 2) {
-            return 60;
+            foodScore = 60;
         } else if (survivalMargin <= 5) {
-            return 30;
+            foodScore = 30;
         }
-        return 10; // margin from 6 to 8
+
+        if(foodQty == 1) {
+            foodScore += 80;
+        } else if(foodQty == 2) {
+            foodScore += 60;
+        } else if(foodQty == 3 && myHealth < 65) {
+            foodScore += 40;
+        } else if(foodQty == 4 && myHealth < 50) {
+            foodScore += 25;
+        } else if(foodQty == 5 && myHealth < 38) {
+            foodScore += 15;
+        }
+        return foodScore;
     } else {
-        const rewardForBest = rewardForFood(bestMargin, bestMargin);
+        const rewardForBest = rewardForFood(bestMargin, bestMargin, foodQty, myHealth);
         if (bestMargin - survivalMargin > 5) {
             return Math.max(rewardForBest - 8, 0); // bestMargin should be 10 or 0
         } else if (bestMargin - survivalMargin == 1) {

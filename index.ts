@@ -221,7 +221,7 @@ function move(gameState: GameState): MoveResponse {
     Object.keys(directionFoodMargins).forEach(dir => {
       if (directionFoodMargins[dir] >= 0) {
         addContribution(dir, "food-distance",
-          rewardForFood(directionFoodMargins[dir], bestMargin),
+          rewardForFood(directionFoodMargins[dir], bestMargin, gameState.board.food.length, gameState.you.health),
           false, isMoveSafe, contributions);
       }
     });
@@ -405,7 +405,7 @@ function move(gameState: GameState): MoveResponse {
     const next: Coord = { x: myHead.x + directions[dir].x, y: myHead.y + directions[dir].y };
     const directionDangerLevel = heatMap[next.y][next.x];
     // console.log(`Danger in (${dir} - ${next.x},${next.y}) = ${heatMap[next.y][next.x]}`);
-    addContribution(dir, "danger-gradient", 3 * (MAX_DANGER - directionDangerLevel), false, isMoveSafe, contributions);
+    addContribution(dir, "danger-gradient", 20 * (MAX_DANGER - directionDangerLevel) - 50, false, isMoveSafe, contributions);
   });
   // console.log(`heatMap = ${JSON.stringify(heatMap)}`);
 
