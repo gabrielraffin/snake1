@@ -94,6 +94,7 @@ export function floodFillContribution(gameState: GameState, rule: string,
     let directionScores: { [key: string]: number } = {};
     let riskScores: { [key: string]: number } = {};
     let numberOfHeads: { [key: string]: number } = {};
+    let numberOfTails: { [key: string]: number } = {};
     possibleDirections.forEach(direction => {
         const space = floodFill(gameState.you.body[0], gameState, direction as keyof typeof directions);
         console.log(`floodFill [${direction}] = ${JSON.stringify(space)}`);
@@ -102,6 +103,7 @@ export function floodFillContribution(gameState: GameState, rule: string,
         if (space.spaceSize > maxSpace) {
             maxSpace = space.spaceSize;
         }
+        numberOfTails[direction] = space.numberOfTails;
         numberOfHeads[direction] = Math.max(space.numberOfEnemyHeads, Math.ceil(space.numberOfProbableHead / 2)); // May not be 100% accurate
         riskScores[direction] = numberOfHeads[direction] - space.numberOfTails;
     });
@@ -109,11 +111,19 @@ export function floodFillContribution(gameState: GameState, rule: string,
         console.log(`direction ${direction} - score: ${directionScores[direction]}, maxSpace: ${maxSpace}, riskScore: ${riskScores[direction]}`);
         if (riskScores[direction] > -1) { // More heads, dangerous space
             if (directionScores[direction] < gameState.you.length) {
-                addContribution(direction, rule, isPrediction ? -80 : -120, false, isMoveSafe, contributions);
-            } if (directionScores[direction] < gameState.you.length + 20) {
-                addContribution(direction, rule, isPrediction ? -30 : -40, false, isMoveSafe, contributions);
+                if(numberOfTails[direction] >= 1) {
+                    addContribution(direction, rule, isPrediction ? -30 : -100, false, isMoveSafe, contributions); // Maybe we can follow a tail
+                } else {
+                    addContribution(direction, rule, isPrediction ? -50 : -300, false, isMoveSafe, contributions);
+                }
+            } else if (directionScores[direction] < gameState.you.length + 20) {
+                if(numberOfTails[direction] >= 1) {
+                    addContribution(direction, rule, isPrediction ? -15 : -28, false, isMoveSafe, contributions);
+                } else {
+                    addContribution(direction, rule, isPrediction ? -22 : -50, false, isMoveSafe, contributions);
+                }
             } else {
-                addContribution(direction, rule, isPrediction ? -10 : -15, false, isMoveSafe, contributions);
+                addContribution(direction, rule, isPrediction ? -8 : -15, false, isMoveSafe, contributions);
             }
         } else if (riskScores[direction] == -1) { // Space size will be stable
             let contribscore = isPrediction ? 2 : 0;
