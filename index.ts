@@ -37,7 +37,7 @@ function info(snake_name: string): InfoResponse {
     return {
       apiversion: "1",
       author: "",
-      color: "#333333",
+      color: "#F5CC4D",
       head: "caffeine",
       tail: "round-bum",
       version: "0.0.1"
