@@ -11,8 +11,17 @@ export default function runServer(handlers: BattlesnakeHandlers) {
   const app = express();
   app.use(express.json());
 
+  app.get("/behemoth", (req: Request, res: Response) => {
+    res.send(handlers.info("behemoth"));
+  });
+
   app.get("/", (req: Request, res: Response) => {
     res.send(handlers.info("killerwhale"));
+  });
+
+  app.post("/behemoth/start", (req: Request, res: Response) => {
+    handlers.start(req.body);
+    res.send("ok");
   });
 
   app.post("/start", (req: Request, res: Response) => {
@@ -20,11 +29,20 @@ export default function runServer(handlers: BattlesnakeHandlers) {
     res.send("ok");
   });
 
+  app.post("/behemoth/move", (req: Request, res: Response) => {
+    res.send(handlers.move(req.body));
+  });
+
   app.post("/move", (req: Request, res: Response) => {
     res.send(handlers.move(req.body));
   });
 
   app.post("/end", (req: Request, res: Response) => {
+    handlers.end(req.body);
+    res.send("ok");
+  });
+
+  app.post("/behemoth/end", (req: Request, res: Response) => {
     handlers.end(req.body);
     res.send("ok");
   });
