@@ -12,7 +12,7 @@ export default function runServer(handlers: BattlesnakeHandlers) {
   app.use(express.json());
 
   app.get("/", (req: Request, res: Response) => {
-    res.send(handlers.info());
+    res.send(handlers.info("killerwhale"));
   });
 
   app.post("/start", (req: Request, res: Response) => {

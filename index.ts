@@ -21,17 +21,28 @@ import { generateDangerHeatmap, MAX_DANGER } from "./dangerHeatMap";
 // info is called when you create your Battlesnake on play.battlesnake.com
 // and controls your Battlesnake's appearance
 // TIP: If you open your Battlesnake URL in a browser you should see this data
-function info(): InfoResponse {
+function info(snake_name: string): InfoResponse {
   console.log("INFO");
 
-  return {
-    apiversion: "1",
-    author: "", // TODO: Your Battlesnake Username
-    color: "#000000", // TODO: Choose color
-    head: "orca", // TODO: Choose head
-    tail: "shiny", // TODO: Choose tail
-    version: "0.0.1"
-  };
+  if (snake_name == "killerwhale") {
+    return {
+      apiversion: "1",
+      author: "",
+      color: "#222A34",
+      head: "orca",
+      tail: "shiny",
+      version: "0.0.1"
+    };
+  } else {
+    return {
+      apiversion: "1",
+      author: "",
+      color: "#333333",
+      head: "caffeine",
+      tail: "round-bum",
+      version: "0.0.1"
+    };
+  }
 }
 
 // start is called when your Battlesnake begins a game
@@ -68,8 +79,8 @@ function move(gameState: GameState): MoveResponse {
   };
 
   // remove snakes queues
+  gameState.board.queues = [];
   if (gameState.game.ruleset.name != "constrictor") {
-    gameState.board.queues = [];
     gameState.board.queues.push(gameState.you.body.pop() as Coord);
     gameState.board.snakes.forEach(snake => gameState.board.queues!.push(snake.body.pop() as Coord));
   }
